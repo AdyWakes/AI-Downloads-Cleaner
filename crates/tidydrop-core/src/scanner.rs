@@ -187,17 +187,17 @@ fn is_system(name: &str, _md: &Metadata) -> bool {
     false
 }
 
+#[cfg(windows)]
+fn is_cloud_only(md: &Metadata) -> bool {
+    win_attrs(md)
+        & (FILE_ATTRIBUTE_OFFLINE
+            | FILE_ATTRIBUTE_RECALL_ON_OPEN
+            | FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS)
+        != 0
+}
+
+#[cfg(not(windows))]
 fn is_cloud_only(_md: &Metadata) -> bool {
-    #[cfg(windows)]
-    {
-        let a = win_attrs(_md);
-        return a
-            & (FILE_ATTRIBUTE_OFFLINE
-                | FILE_ATTRIBUTE_RECALL_ON_OPEN
-                | FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS)
-            != 0;
-    }
-    #[allow(unreachable_code)]
     false
 }
 
@@ -217,22 +217,23 @@ fn is_link(md: &Metadata) -> bool {
 /// Is another program holding the file open? (Windows: exclusive open fails.)
 /// On macOS/Linux there are no mandatory locks; moving an open file is harmless
 /// there, and the "recently modified" rule catches active downloads.
-pub fn is_in_use(_path: &Path) -> bool {
-    #[cfg(windows)]
+#[cfg(windows)]
+pub fn is_in_use(path: &Path) -> bool {
+    use std::os::windows::fs::OpenOptionsExt;
+    const GENERIC_READ: u32 = 0x8000_0000;
+    match fs::OpenOptions::new()
+        .access_mode(GENERIC_READ)
+        .share_mode(0)
+        .open(path)
     {
-        use std::os::windows::fs::OpenOptionsExt;
-        const GENERIC_READ: u32 = 0x8000_0000;
-        let r = fs::OpenOptions::new()
-            .access_mode(GENERIC_READ)
-            .share_mode(0)
-            .open(_path);
-        return match r {
-            Ok(_) => false,
-            // 32 = ERROR_SHARING_VIOLATION, 33 = ERROR_LOCK_VIOLATION
-            Err(e) => matches!(e.raw_os_error(), Some(32) | Some(33)),
-        };
+        Ok(_) => false,
+        // 32 = ERROR_SHARING_VIOLATION, 33 = ERROR_LOCK_VIOLATION
+        Err(e) => matches!(e.raw_os_error(), Some(32) | Some(33)),
     }
-    #[allow(unreachable_code)]
+}
+
+#[cfg(not(windows))]
+pub fn is_in_use(_path: &Path) -> bool {
     false
 }
 
@@ -291,7 +292,9 @@ pub fn check_file(
     if is_recent(&md, Duration::from_secs(config.skip_recent_secs), now) {
         return Err(skip(SkipReason::RecentlyModified, String::new()));
     }
-    if is_in_use(path) {
+    let cloud_only = is_cloud_only(&md);
+    // Don't open online-only placeholders (could trigger a download); moving them is fine.
+    if !cloud_only && is_in_use(path) {
         return Err(skip(SkipReason::InUse, String::new()));
     }
     let modified = md
@@ -306,7 +309,7 @@ pub fn check_file(
         name,
         size: md.len(),
         modified,
-        cloud_only: is_cloud_only(&md),
+        cloud_only,
     })
 }
 
