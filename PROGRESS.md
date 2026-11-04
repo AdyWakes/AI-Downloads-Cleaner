@@ -9,8 +9,10 @@
 - Phase 5 (core part, done before UI so commands could use it): Ollama client, snippets, pipeline.
 - Phase 4: Tauri commands (state holds the plan; UI only sends overrides), React UI: home/folder pick, AI badge + Ollama guide, stats (size, largest, duplicates, skipped), preview (untick, change category, custom folder, by-month toggle, filter), apply progress, before/after animation, undo, history, settings (folders, rules, AI, general), dark/light. Browser mock backend for `npm run dev` demos. Screenshots in docs/screenshots.
 
+- Phase 6: `tidydrop-cli` (scan, plan [--json], clean [--yes] [--only CAT] [--by-month] [--no-ai], undo [--id], history, ai-status, config path|show|reset, global --home). Shares config + undo history with the app. Integration test drives the real binary.
+
 ## In progress
-- Phase 6: CLI.
+- Phase 7: release workflow + README.
 
 ## Next
 - Phases 3–7.

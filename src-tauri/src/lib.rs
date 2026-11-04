@@ -88,7 +88,10 @@ fn save_config(state: State<'_, AppState>, config: Config) -> Result<Config, Str
 fn reset_config(state: State<'_, AppState>) -> Result<Config, String> {
     // keep UI theme preference
     let theme = state.config.lock().unwrap().theme.clone();
-    let c = Config { theme, ..Default::default() };
+    let c = Config {
+        theme,
+        ..Default::default()
+    };
     save_config(state, c)
 }
 
