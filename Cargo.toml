@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["crates/tidydrop-core", "crates/tidydrop-cli", "src-tauri"]
+# The desktop shell needs WebKitGTK on Linux; keep plain `cargo test` working everywhere.
+default-members = ["crates/tidydrop-core", "crates/tidydrop-cli"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/AdyWakes/AI-Downloads-Cleaner"
+authors = ["tidydrop contributors"]
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tidydrop-core = { path = "crates/tidydrop-core" }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
