@@ -4060,7 +4060,9 @@ name = "tidydrop-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "filetime",
  "serde_json",
+ "tempfile",
  "tidydrop-core",
 ]
 
