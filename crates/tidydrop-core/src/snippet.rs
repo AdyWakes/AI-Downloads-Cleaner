@@ -11,6 +11,7 @@ const TEXT_EXTS: &[&str] = &[
 ];
 const MAX_PDF_BYTES: u64 = 20 * 1024 * 1024;
 const MAX_DOCX_XML_BYTES: u64 = 4 * 1024 * 1024;
+const PDF_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(4);
 
 fn collapse(s: &str, max_chars: usize) -> String {
     let mut out = String::new();
@@ -79,14 +80,23 @@ fn pdf_text(path: &Path) -> Option<String> {
         return None;
     }
     let path = path.to_path_buf();
-    // PDF parsers can panic on malformed files; contain it.
-    std::panic::catch_unwind(move || {
-        let doc = lopdf::Document::load(&path).ok()?;
-        let first = *doc.get_pages().keys().next()?;
-        doc.extract_text(&[first]).ok()
-    })
-    .ok()
-    .flatten()
+    // PDF parsers can panic or spin on malformed files: run on a helper thread,
+    // contain panics, and give up after a few seconds (the thread is abandoned).
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::Builder::new()
+        .name("tidydrop-pdf".into())
+        .spawn(move || {
+            let r = std::panic::catch_unwind(move || {
+                let doc = lopdf::Document::load(&path).ok()?;
+                let first = *doc.get_pages().keys().next()?;
+                doc.extract_text(&[first]).ok()
+            })
+            .ok()
+            .flatten();
+            let _ = tx.send(r);
+        })
+        .ok()?;
+    rx.recv_timeout(PDF_TIMEOUT).ok().flatten()
 }
 
 /// Up to `max_chars` characters of text, or `None` if there's nothing useful.
@@ -147,6 +157,45 @@ mod tests {
         let s = extract(&p, "docx", 200).unwrap();
         assert!(s.contains("Tax Invoice"), "{s}");
         assert!(s.contains("GSTIN 29ABC & Co"), "{s}");
+    }
+
+    #[test]
+    fn pdf_first_page_snippet() {
+        use lopdf::content::{Content, Operation};
+        use lopdf::{dictionary, Document, Object, Stream};
+        let mut doc = Document::with_version("1.5");
+        let pages_id = doc.new_object_id();
+        let font_id = doc.add_object(
+            dictionary! {"Type" => "Font", "Subtype" => "Type1", "BaseFont" => "Courier"},
+        );
+        let resources_id = doc.add_object(dictionary! {"Font" => dictionary! {"F1" => font_id}});
+        let content = Content {
+            operations: vec![
+                Operation::new("BT", vec![]),
+                Operation::new("Tf", vec!["F1".into(), 24.into()]),
+                Operation::new("Td", vec![50.into(), 700.into()]),
+                Operation::new("Tj", vec![Object::string_literal("TAX INVOICE No 42")]),
+                Operation::new("ET", vec![]),
+            ],
+        };
+        let content_id = doc.add_object(Stream::new(dictionary! {}, content.encode().unwrap()));
+        let page_id = doc.add_object(
+            dictionary! {"Type" => "Page", "Parent" => pages_id, "Contents" => content_id},
+        );
+        doc.objects.insert(
+            pages_id,
+            Object::Dictionary(dictionary! {
+                "Type" => "Pages", "Kids" => vec![page_id.into()], "Count" => 1,
+                "Resources" => resources_id, "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+            }),
+        );
+        let catalog_id = doc.add_object(dictionary! {"Type" => "Catalog", "Pages" => pages_id});
+        doc.trailer.set("Root", catalog_id);
+        let d = tempfile::tempdir().unwrap();
+        let p = d.path().join("scan0042.pdf");
+        doc.save(&p).unwrap();
+        let s = extract(&p, "pdf", 100).unwrap();
+        assert!(s.contains("TAX INVOICE No 42"), "{s}");
     }
 
     #[test]

@@ -114,6 +114,20 @@ pub fn is_within(root: &Path, child: &Path) -> bool {
     child.starts_with(root)
 }
 
+/// Second half of the hard-link fallback. If the old name can't be removed, remove
+/// the new link again (the data is still at `from`), so the file isn't left in two places.
+#[cfg(unix)]
+#[allow(dead_code)]
+fn unlink_after_link(from: &Path, to: &Path) -> io::Result<()> {
+    match std::fs::remove_file(from) {
+        Ok(()) => Ok(()),
+        Err(e) => {
+            let _ = std::fs::remove_file(to);
+            Err(e)
+        }
+    }
+}
+
 /// Rename `from` to `to`, failing with `AlreadyExists` instead of overwriting.
 ///
 /// `std::fs::rename` silently replaces an existing destination on every OS, which
@@ -156,7 +170,7 @@ mod imp {
     /// If hard links aren't supported either, check-then-rename.
     fn fallback(from: &Path, to: &Path) -> io::Result<()> {
         match std::fs::hard_link(from, to) {
-            Ok(()) => std::fs::remove_file(from),
+            Ok(()) => unlink_after_link(from, to),
             Err(e) if e.kind() == io::ErrorKind::AlreadyExists => Err(e),
             Err(_) => {
                 if exists_any(to) {
@@ -215,7 +229,7 @@ mod imp {
     use super::*;
     pub fn rename_noreplace(from: &Path, to: &Path) -> io::Result<()> {
         match std::fs::hard_link(from, to) {
-            Ok(()) => std::fs::remove_file(from),
+            Ok(()) => unlink_after_link(from, to),
             Err(e) if e.kind() == io::ErrorKind::AlreadyExists => Err(e),
             Err(_) => {
                 if exists_any(to) {
