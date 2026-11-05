@@ -1,71 +1,102 @@
-// Small shared UI building blocks.
+// Shared UI building blocks. All colours come from the design tokens in index.css.
 import type { ReactNode } from "react";
+import {
+  Archive,
+  CodeXml,
+  FileText,
+  FileType,
+  Film,
+  Folder,
+  GraduationCap,
+  Image,
+  Music,
+  Package,
+  Presentation,
+  Receipt,
+  ScreenShare,
+  Shapes,
+  Sheet,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
-export const CATEGORY_STYLE: Record<string, { icon: string; color: string }> = {
-  Documents: { icon: "📄", color: "#3b82f6" },
-  PDFs: { icon: "📕", color: "#ef4444" },
-  Images: { icon: "🖼️", color: "#ec4899" },
-  Screenshots: { icon: "📸", color: "#a855f7" },
-  Videos: { icon: "🎬", color: "#f97316" },
-  Audio: { icon: "🎵", color: "#14b8a6" },
-  Installers: { icon: "💿", color: "#64748b" },
-  Archives: { icon: "🗜️", color: "#eab308" },
-  Code: { icon: "💻", color: "#0ea5e9" },
-  Spreadsheets: { icon: "📊", color: "#22c55e" },
-  Presentations: { icon: "📽️", color: "#f43f5e" },
-  "Bills & Receipts": { icon: "🧾", color: "#10b981" },
-  "College/Study": { icon: "🎓", color: "#6366f1" },
-  Other: { icon: "📦", color: "#94a3b8" },
+export const CATEGORY_ICON: Record<string, LucideIcon> = {
+  Documents: FileText,
+  PDFs: FileType,
+  Images: Image,
+  Screenshots: ScreenShare,
+  Videos: Film,
+  Audio: Music,
+  Installers: Package,
+  Archives: Archive,
+  Code: CodeXml,
+  Spreadsheets: Sheet,
+  Presentations: Presentation,
+  "Bills & Receipts": Receipt,
+  "College/Study": GraduationCap,
+  Other: Shapes,
 };
 
-const FALLBACK_COLORS = ["#06b6d4", "#84cc16", "#d946ef", "#f59e0b", "#8b5cf6"];
-
-export function catStyle(name: string) {
-  if (CATEGORY_STYLE[name]) return CATEGORY_STYLE[name];
-  let h = 0;
-  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return { icon: "📁", color: FALLBACK_COLORS[h % FALLBACK_COLORS.length] };
+export function categoryIcon(name: string): LucideIcon {
+  return CATEGORY_ICON[name] ?? Folder;
 }
+
+/** Category icon on a soft orange tile. */
+export function CategoryBadge({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
+  const Icon = categoryIcon(name);
+  const box = { sm: "h-7 w-7 rounded-lg", md: "h-9 w-9 rounded-xl", lg: "h-12 w-12 rounded-2xl" }[size];
+  const icon = { sm: 15, md: 18, lg: 24 }[size];
+  return (
+    <span className={`inline-flex shrink-0 items-center justify-center bg-tint text-accent ${box}`}>
+      <Icon size={icon} strokeWidth={1.8} aria-hidden />
+    </span>
+  );
+}
+
+type Variant = "primary" | "outline" | "quiet";
 
 export function Button({
   children,
   onClick,
-  variant = "secondary",
+  variant = "outline",
   disabled,
   className = "",
   title,
   type = "button",
+  size = "md",
 }: {
   children: ReactNode;
   onClick?: () => void;
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: Variant;
   disabled?: boolean;
   className?: string;
   title?: string;
   type?: "button" | "submit";
+  size?: "sm" | "md" | "lg";
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-40";
+  const sizes = {
+    sm: "h-8 rounded-lg px-3 text-sm",
+    md: "h-10 rounded-xl px-4 text-sm",
+    lg: "h-12 rounded-xl px-6 text-base",
+  }[size];
   const styles = {
-    primary: "bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:scale-[.98]",
-    secondary:
-      "bg-white text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700 dark:hover:bg-slate-700",
-    ghost: "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
-    danger: "bg-amber-500 text-white hover:bg-amber-600",
+    primary:
+      "bg-action text-on-action shadow-soft hover:bg-action-hover active:translate-y-px disabled:bg-line disabled:text-ink-3 disabled:shadow-none disabled:opacity-100",
+    outline: "border border-line bg-surface text-ink hover:border-tint-strong hover:bg-tint",
+    quiet: "text-ink-2 hover:bg-tint hover:text-ink",
   }[variant];
   return (
-    <button type={type} title={title} disabled={disabled} onClick={onClick} className={`${base} ${styles} ${className}`}>
+    <button type={type} title={title} disabled={disabled} onClick={onClick} className={`${base} ${sizes} ${styles} ${className}`}>
       {children}
     </button>
   );
 }
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-900 dark:ring-slate-800 ${className}`}>
-      {children}
-    </div>
-  );
+/** The one level of container. Never nest these. */
+export function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <section className={`rounded-2xl bg-surface shadow-soft ${className}`}>{children}</section>;
 }
 
 export function Toggle({
@@ -82,49 +113,60 @@ export function Toggle({
   disabled?: boolean;
 }) {
   return (
-    <label className={`flex cursor-pointer items-start gap-3 ${disabled ? "opacity-50" : ""}`}>
+    <div className={`flex items-start gap-3 ${disabled ? "opacity-50" : ""}`}>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition ${checked ? "bg-brand-500" : "bg-slate-300 dark:bg-slate-600"}`}
+        className={`relative mt-0.5 h-6 w-10 shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+          checked ? "bg-brand" : "bg-line"
+        }`}
       >
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${checked ? "left-[22px]" : "left-0.5"}`}
+          className={`absolute top-1 h-4 w-4 rounded-full bg-surface shadow-soft transition-all duration-200 ${checked ? "left-5" : "left-1"}`}
         />
       </button>
-      <span>
-        <span className="block text-sm font-medium">{label}</span>
-        {hint && <span className="block text-xs text-slate-500 dark:text-slate-400">{hint}</span>}
-      </span>
-    </label>
+      <div className="min-w-0">
+        <div className="text-[15px] font-medium leading-6 text-ink">{label}</div>
+        {hint && <div className="text-sm text-ink-3">{hint}</div>}
+      </div>
+    </div>
   );
 }
 
 export function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-      <div className="h-full rounded-full bg-brand-500 transition-all duration-300" style={{ width: `${pct}%` }} />
+    <div className="h-2 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+      <div className="h-full rounded-full bg-brand transition-all duration-300 ease-out" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+/** Indeterminate bar for steps without a count. */
+export function BusyBar() {
+  return (
+    <div className="relative h-2 w-full overflow-hidden rounded-full bg-line">
+      <div className="absolute inset-y-0 w-2/5 animate-shimmer rounded-full bg-brand" />
     </div>
   );
 }
 
 export function Modal({ children, onClose, title }: { children: ReactNode; onClose: () => void; title: string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-label={title}
-        className="max-h-[90vh] w-full max-w-lg animate-pop overflow-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900"
+        className="max-h-[90vh] w-full max-w-lg animate-pop overflow-auto rounded-2xl bg-surface p-7 shadow-lift"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">{title}</h2>
-          <button className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={onClose} aria-label="Close">
-            ✕
+        <div className="mb-3 flex items-start justify-between gap-4">
+          <h2 className="text-xl font-bold leading-7 text-ink">{title}</h2>
+          <button className="-mr-2 -mt-1 rounded-lg p-2 text-ink-3 transition-colors hover:bg-tint hover:text-ink" onClick={onClose} aria-label="Close">
+            <X size={18} />
           </button>
         </div>
         {children}
@@ -133,13 +175,30 @@ export function Modal({ children, onClose, title }: { children: ReactNode; onClo
   );
 }
 
-export function Pill({ children, tone = "slate" }: { children: ReactNode; tone?: "slate" | "brand" | "violet" | "amber" | "blue" }) {
+export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "brand" | "success" | "error" }) {
   const tones = {
-    slate: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-    brand: "bg-brand-100 text-brand-800 dark:bg-brand-900/60 dark:text-brand-200",
-    violet: "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-200",
-    amber: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200",
-    blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200",
+    neutral: "bg-bg text-ink-2",
+    brand: "bg-tint text-accent",
+    success: "bg-bg text-success",
+    error: "bg-bg text-error",
   }[tone];
-  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${tones}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${tones}`}>{children}</span>;
+}
+
+export function Notice({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "brand" | "error" }) {
+  const tones = {
+    neutral: "bg-surface text-ink-2",
+    brand: "bg-tint text-ink",
+    error: "bg-surface text-error",
+  }[tone];
+  return <div className={`rounded-xl px-4 py-3 text-sm leading-6 shadow-soft ${tones}`}>{children}</div>;
+}
+
+/** "30 files": the number in mono, the word in the UI font. */
+export function Count({ n, one, many }: { n: number; one: string; many?: string }) {
+  return (
+    <>
+      <span className="font-mono">{n.toLocaleString()}</span> {n === 1 ? one : (many ?? one + "s")}
+    </>
+  );
 }
