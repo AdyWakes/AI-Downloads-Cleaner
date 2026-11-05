@@ -1,0 +1,101 @@
+name: Release
+
+# Builds installers when a version tag is pushed, e.g.:
+#   git tag v0.1.0 && git push origin v0.1.0
+# The GitHub release is created as a DRAFT; review it and publish manually.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  app:
+    name: App (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            platform: windows-latest
+            args: ""
+          - name: macOS (universal)
+            platform: macos-latest
+            args: "--target universal-apple-darwin"
+          - name: Linux
+            platform: ubuntu-22.04
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux system deps
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libdbus-1-dev patchelf
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "tidydrop ${{ github.ref_name }}"
+          releaseBody: "See the README for install notes. Installers are not code-signed yet."
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  cli:
+    name: CLI (${{ matrix.target }})
+    needs: app
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: tidydrop-cli.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            bin: tidydrop-cli
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            bin: tidydrop-cli
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bin: tidydrop-cli
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release -p tidydrop-cli --target ${{ matrix.target }}
+      - name: Package
+        shell: bash
+        run: |
+          mkdir dist-cli
+          cp target/${{ matrix.target }}/release/${{ matrix.bin }} dist-cli/
+          cd dist-cli
+          if [[ "${{ matrix.os }}" == windows-* ]]; then
+            7z a ../tidydrop-cli-${{ matrix.target }}.zip ${{ matrix.bin }}
+          else
+            tar czf ../tidydrop-cli-${{ matrix.target }}.tar.gz ${{ matrix.bin }}
+          fi
+      - name: Upload to draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.ref_name }}" tidydrop-cli-${{ matrix.target }}.* --clobber

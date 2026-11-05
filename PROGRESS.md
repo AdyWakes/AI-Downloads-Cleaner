@@ -11,8 +11,10 @@
 
 - Phase 6: `tidydrop-cli` (scan, plan [--json], clean [--yes] [--only CAT] [--by-month] [--no-ai], undo [--id], history, ai-status, config path|show|reset, global --home). Shares config + undo history with the app. Integration test drives the real binary.
 
+- Phase 7: release workflow (tauri-action draft release for Windows/macOS universal/Linux + CLI archives), README, CONTRIBUTING, LICENSE (MIT).
+
 ## In progress
-- Phase 7: release workflow + README.
+- Final: full test/build run, safety self-review.
 
 ## Next
 - Phases 3–7.
