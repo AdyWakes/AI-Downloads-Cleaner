@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, errorText, isTauri } from "./api";
 import type { AiStatus, AppInfo, ApplyReport, Config, ItemOverride, JournalSummary, Plan, Prepared, Stage, UndoReport } from "./types";
-import { Button, Card, ProgressBar } from "./ui";
+import { History as HistoryIcon, Moon, Settings as SettingsIcon, Sparkles, Sun } from "lucide-react";
+import { Button, BusyBar, ProgressBar } from "./ui";
+import { DroppingFiles } from "./components/Art";
 import { Home } from "./components/Home";
 import { StatsView } from "./components/StatsView";
 import { Preview } from "./components/Preview";
@@ -162,50 +164,51 @@ export default function App() {
   };
 
   if (!config) {
-    return <div className="flex h-screen items-center justify-center text-slate-500">Loading…</div>;
+    return <div className="flex h-screen items-center justify-center text-ink-3">Loading…</div>;
   }
 
   const busy = screen === "working";
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-slate-50/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-5 py-3">
-          <button className="flex items-center gap-2" onClick={() => !busy && goHome()} disabled={busy}>
+    <div className="min-h-screen bg-bg text-ink">
+      <header className="sticky top-0 z-40 border-b border-line bg-bg">
+        <div className="mx-auto flex h-16 max-w-5xl items-center gap-2 px-6">
+          <button className="flex items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand" onClick={() => !busy && goHome()} disabled={busy}>
             <img src="/logo.svg" alt="" className="h-8 w-8" />
-            <span className="text-lg font-extrabold tracking-tight">tidydrop</span>
+            <span className="text-xl font-bold tracking-tight text-ink">tidydrop</span>
           </button>
-          {!isTauri && <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">browser demo (mock data)</span>}
+          {!isTauri && <span className="ml-2 text-sm text-ink-3">browser demo · mock data</span>}
           <span className="flex-1" />
           <button
             onClick={() => setGuide(true)}
             title={ai?.message}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
-              ai?.active
-                ? "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-900/30 dark:text-violet-200 dark:ring-violet-800"
-                : "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
+            className={`mr-2 flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors ${
+              ai?.active ? "bg-tint text-accent hover:bg-tint-strong" : "text-ink-3 hover:bg-tint hover:text-ink"
             }`}
           >
-            <span className={`h-2 w-2 rounded-full ${ai?.active ? "bg-violet-500" : "bg-slate-400"}`} />
+            {ai?.active ? <Sparkles size={14} aria-hidden /> : <span className="h-2 w-2 rounded-full bg-ink-3" aria-hidden />}
             AI: {ai?.active ? "on" : "off"}
           </button>
-          <Button variant="ghost" disabled={busy} onClick={() => (refreshHistory(), setScreen("history"))}>
-            History
+          <Button variant="quiet" size="sm" disabled={busy} onClick={() => (refreshHistory(), setScreen("history"))}>
+            <HistoryIcon size={15} aria-hidden /> History
           </Button>
-          <Button variant="ghost" disabled={busy} onClick={() => setScreen("settings")}>
-            Settings
+          <Button variant="quiet" size="sm" disabled={busy} onClick={() => setScreen("settings")}>
+            <SettingsIcon size={15} aria-hidden /> Settings
           </Button>
-          <Button variant="ghost" onClick={toggleTheme} title="Toggle dark mode">
-            {document.documentElement.classList.contains("dark") ? "☀️" : "🌙"}
-          </Button>
+          <button
+            onClick={toggleTheme}
+            title="Toggle dark mode"
+            aria-label="Toggle dark mode"
+            className="ml-1 rounded-lg p-2 text-ink-3 transition-colors hover:bg-tint hover:text-ink"
+          >
+            {document.documentElement.classList.contains("dark") ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-5 py-6">
+      <main className="mx-auto max-w-5xl px-6 pb-10 pt-10">
         {error && screen !== "home" && (
-          <div className="mx-auto mb-4 max-w-3xl rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200 dark:bg-red-900/20 dark:text-red-300 dark:ring-red-900">
-            {error}
-          </div>
+          <div className="mx-auto mb-6 max-w-3xl rounded-xl bg-surface px-4 py-3 text-[15px] text-error shadow-soft">{error}</div>
         )}
 
         {screen === "home" && (
@@ -233,20 +236,21 @@ export default function App() {
         )}
 
         {screen === "working" && (
-          <div className="mx-auto max-w-md py-24 text-center">
-            <div className="mb-6 text-5xl">{workingLabel === "apply" ? "🚚" : "🔍"}</div>
+          <div className="mx-auto max-w-md pt-16 text-center">
+            <DroppingFiles />
             {workingLabel === "apply" && applyProgress ? (
               <>
-                <h2 className="mb-4 text-xl font-bold">
-                  Moving files… {applyProgress.done}/{applyProgress.total}
-                </h2>
+                <h2 className="mt-8 text-[28px] font-bold tracking-tight text-ink">Moving files…</h2>
+                <p className="mb-6 mt-1 font-mono text-lg text-ink-2">
+                  {applyProgress.done} / {applyProgress.total}
+                </p>
                 <ProgressBar value={applyProgress.done} max={applyProgress.total} />
-                <p className="mt-3 text-sm text-slate-500">Every move is written to the undo journal first.</p>
+                <p className="mt-4 text-[15px] text-ink-3">Every move is written to the undo journal first.</p>
               </>
             ) : (
               <>
-                <h2 className="mb-4 text-xl font-bold">{stageText(stage)}</h2>
-                {stage?.stage === "ai" ? <ProgressBar value={stage.done} max={stage.total} /> : <div className="mx-auto h-1.5 w-40 animate-pulse rounded-full bg-brand-400" />}
+                <h2 className="mb-6 mt-8 text-[28px] font-bold tracking-tight text-ink">{stageText(stage)}</h2>
+                {stage?.stage === "ai" ? <ProgressBar value={stage.done} max={stage.total} /> : <BusyBar />}
               </>
             )}
           </div>
@@ -299,11 +303,6 @@ export default function App() {
 
         {screen === "history" && <History items={history} busy={undoing} onUndo={(id) => undo(id)} onBack={() => setScreen(plan ? "preview" : "home")} />}
 
-        {screen === "home" && (
-          <Card className="mx-auto mt-6 max-w-2xl !bg-transparent !shadow-none !ring-0 text-center text-xs text-slate-500">
-            🔒 100% offline · no accounts · no telemetry · files are only ever moved, never deleted
-          </Card>
-        )}
       </main>
 
       {guide && (

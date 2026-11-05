@@ -1,11 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#46c191"/><stop offset="1" stop-color="#126b4f"/>
-    </linearGradient>
-  </defs>
-  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#g)"/>
-  <path d="M512 210 C 512 210 340 430 340 560 a172 172 0 0 0 344 0 C684 430 512 210 512 210z" fill="#ffffff"/>
-  <path d="M430 580 l60 60 l110 -120" fill="none" stroke="#158660" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="250" y="790" width="524" height="40" rx="20" fill="#ffffff" opacity=".55"/>
+  <!-- tidydrop: a file dropping into an open folder. Brand orange #F97316, white, warm near-black. -->
+  <rect x="64" y="64" width="896" height="896" rx="220" fill="#F97316"/>
+  <!-- folder back -->
+  <path d="M232 430 a40 40 0 0 1 40-40 h150 l52 56 h278 a40 40 0 0 1 40 40 v268 a48 48 0 0 1-48 48 H280 a48 48 0 0 1-48-48z" fill="#FFF1E6"/>
+  <!-- the file, tilted, dropping in -->
+  <g transform="rotate(-12 512 400)">
+    <path d="M410 200 h150 l74 74 v236 a20 20 0 0 1-20 20 H410 a20 20 0 0 1-20-20 V220 a20 20 0 0 1 20-20z" fill="#FFFFFF"/>
+    <path d="M560 200 v54 a20 20 0 0 0 20 20 h54z" fill="#FED7AA"/>
+    <rect x="432" y="330" width="150" height="22" rx="11" fill="#FDBA74"/>
+    <rect x="432" y="380" width="110" height="22" rx="11" fill="#FDBA74"/>
+  </g>
+  <!-- folder front -->
+  <path d="M210 540 a40 40 0 0 1 40-40 h524 a40 40 0 0 1 40 40 l-26 222 a48 48 0 0 1-48 42 H284 a48 48 0 0 1-48-42z" fill="#FFFFFF"/>
+  <rect x="452" y="610" width="120" height="26" rx="13" fill="#F97316"/>
 </svg>

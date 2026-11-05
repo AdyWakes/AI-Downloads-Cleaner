@@ -1,95 +1,96 @@
 import { useEffect, useMemo, useState } from "react";
+import { FolderOpen, RotateCcw } from "lucide-react";
 import type { ApplyReport, PlanItem, UndoReport } from "../types";
-import { Button, Card, catStyle } from "../ui";
+import { Button, Count, Panel, categoryIcon } from "../ui";
 import { baseName, groupBy, plural } from "../format";
+import { FolderArt } from "./Art";
 
 function rand(seed: number) {
   const x = Math.sin(seed * 9301 + 49297) * 233280;
   return x - Math.floor(x);
 }
 
-/** The demo-GIF moment: scattered files fly into their folders. */
+const SWITCH_MS = 900;
+const FLIGHT_MS = 850;
+const STAGGER_MS = 38;
+
+/** The demo-GIF moment: a messy pile of files flies into orange folders, which gulp them up. */
 export function BeforeAfter({ items, order }: { items: PlanItem[]; order: string[] }) {
   const [phase, setPhase] = useState<"before" | "after">("before");
   const bins = useMemo(() => {
     const g = groupBy(items, (i) => i.category, order).sort((a, b) => b[1].length - a[1].length);
-    if (g.length <= 7) return g;
-    const rest = g.slice(6).flatMap(([, v]) => v);
-    return [...g.slice(0, 6), [`+${g.length - 6} more`, rest] as [string, PlanItem[]]];
+    if (g.length <= 6) return g;
+    const rest = g.slice(5).flatMap(([, v]) => v);
+    return [...g.slice(0, 5), [`${g.length - 5} more`, rest] as [string, PlanItem[]]];
   }, [items, order]);
-  const binIndex = new Map<string, number>();
-  bins.forEach(([, list], i) => list.forEach((it) => binIndex.set(it.category, i)));
-  const sample = items.slice(0, 36);
+  const binOf = new Map<number, number>();
+  bins.forEach(([, list], b) => list.forEach((it) => binOf.set(it.id, b)));
+  const sample = items.slice(0, 32);
+  // When does the last file land in each bin? That's when the folder gulps.
+  const landAt = bins.map((_, b) => {
+    const last = sample.reduce((m, it, i) => (binOf.get(it.id) === b ? i : m), 0);
+    return last * STAGGER_MS + FLIGHT_MS * 0.8;
+  });
 
   useEffect(() => {
-    const t = setTimeout(() => setPhase("after"), 700);
+    const t = setTimeout(() => setPhase("after"), SWITCH_MS);
     return () => clearTimeout(t);
   }, []);
 
   return (
-    <div className="relative h-72 w-full overflow-hidden rounded-2xl bg-gradient-to-b from-slate-100 to-white ring-1 ring-slate-200 dark:from-slate-900 dark:to-slate-950 dark:ring-slate-800">
-      <div
-        className={`absolute left-4 top-3 text-xs font-semibold uppercase tracking-wide transition-opacity duration-500 ${
-          phase === "before" ? "text-red-500 opacity-100" : "opacity-0"
-        }`}
-      >
-        Before: chaos
+    <div className="relative h-[340px] w-full overflow-hidden rounded-2xl bg-surface shadow-soft">
+      <div className="absolute left-6 top-5 text-[15px] font-semibold">
+        <span className={`transition-opacity duration-300 ${phase === "before" ? "text-ink opacity-100" : "opacity-0"}`}>Before</span>
+        <span className={`absolute left-0 whitespace-nowrap text-accent transition-opacity duration-500 ${phase === "after" ? "opacity-100" : "opacity-0"}`} style={{ transitionDelay: "1200ms" }}>
+          After
+        </span>
       </div>
-      <div
-        className={`absolute left-4 top-3 text-xs font-semibold uppercase tracking-wide text-brand-600 transition-opacity delay-1000 duration-500 ${
-          phase === "after" ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        After: clean ✨
-      </div>
+
       {sample.map((it, i) => {
-        const bi = binIndex.get(it.category) ?? bins.length - 1;
-        const s = catStyle(it.category);
-        const bx = ((bi + 0.5) / bins.length) * 100;
-        const before = { left: 4 + rand(i) * 72, top: 10 + rand(i + 99) * 48, rot: (rand(i + 7) - 0.5) * 50 };
+        const b = binOf.get(it.id) ?? 0;
+        const Icon = categoryIcon(it.category);
+        const bx = ((b + 0.5) / bins.length) * 100;
+        const before = { x: 10 + rand(i) * 80, y: 15 + rand(i + 99) * 33, r: (rand(i + 7) - 0.5) * 36 };
         const style =
           phase === "before"
-            ? { left: `${before.left}%`, top: `${before.top}%`, transform: `rotate(${before.rot}deg) scale(1)`, opacity: 1 }
-            : { left: `calc(${bx}% - 40px)`, top: "72%", transform: "rotate(0deg) scale(.35)", opacity: 0 };
+            ? { left: `${before.x}%`, top: `${before.y}%`, transform: `translate(-50%,-50%) rotate(${before.r}deg) scale(1)`, opacity: 1 }
+            : { left: `${bx}%`, top: "58%", transform: "translate(-50%,-50%) rotate(0deg) scale(.25)", opacity: 0 };
         return (
           <div
             key={it.id}
-            className="absolute flex max-w-[11rem] items-center gap-1.5 rounded-lg bg-white px-2 py-1 text-xs shadow-md ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700"
+            className="absolute flex max-w-[10.5rem] items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[13px] text-ink shadow-soft"
             style={{
               ...style,
-              transition: "all 900ms cubic-bezier(.6,-0.2,.3,1.2)",
-              transitionDelay: `${i * 35}ms`,
+              transitionProperty: "left, top, transform, opacity",
+              transitionDuration: `${FLIGHT_MS}ms, ${FLIGHT_MS}ms, ${FLIGHT_MS}ms, ${FLIGHT_MS * 0.5}ms`,
+              transitionTimingFunction: "cubic-bezier(.55,-0.15,.35,1)",
+              transitionDelay: `${i * STAGGER_MS}ms, ${i * STAGGER_MS}ms, ${i * STAGGER_MS}ms, ${i * STAGGER_MS + FLIGHT_MS * 0.55}ms`,
             }}
           >
-            <span>{s.icon}</span>
+            <Icon size={14} className="shrink-0 text-accent" aria-hidden />
             <span className="truncate">{it.name}</span>
           </div>
         );
       })}
-      <div className="absolute inset-x-0 bottom-3 flex justify-around px-2">
-        {bins.map(([cat, list], i) => {
-          const s = cat.startsWith("+") ? { icon: "🗂️", color: "#94a3b8" } : catStyle(cat);
-          return (
-            <div
-              key={cat}
-              className={`flex w-20 flex-col items-center transition-all duration-500 ${phase === "after" ? "translate-y-0 opacity-100" : "translate-y-6 opacity-40"}`}
-              style={{ transitionDelay: `${300 + i * 60}ms` }}
-            >
-              <div className="relative flex h-12 w-14 items-center justify-center rounded-xl text-2xl shadow-sm" style={{ background: s.color + "26", border: `2px solid ${s.color}` }}>
-                {s.icon}
-                {phase === "after" && (
-                  <span
-                    className="absolute -right-2 -top-2 animate-pop rounded-full px-1.5 text-[10px] font-bold text-white"
-                    style={{ background: s.color, animationDelay: `${1100 + i * 80}ms` }}
-                  >
-                    {list.length}
-                  </span>
-                )}
-              </div>
-              <span className="mt-1 w-full truncate text-center text-[10px] text-slate-600 dark:text-slate-400">{cat}</span>
+
+      <div
+        className="absolute inset-x-0 bottom-6 flex justify-around px-4 transition-transform duration-700 ease-out"
+        style={{ transform: phase === "after" ? "translateY(-64px)" : "none", transitionDelay: `${Math.max(...landAt, 0) + 700}ms` }}
+      >
+        {bins.map(([cat, list], b) => (
+          <div key={cat} className="flex w-28 flex-col items-center">
+            <div className={phase === "after" ? "animate-gulp" : ""} style={{ animationDelay: `${landAt[b]}ms` }}>
+              <FolderArt size={92} papers={list.length} filled={phase === "after"} delayMs={landAt[b] - 150} />
             </div>
-          );
-        })}
+            <span className="mt-2 w-full truncate text-center text-sm font-medium text-ink-2">{cat}</span>
+            <span
+              className={`text-sm font-medium text-accent ${phase === "after" ? "animate-pop" : "opacity-0"}`}
+              style={{ animationDelay: `${landAt[b] + 150}ms` }}
+            >
+              <Count n={list.length} one="file" />
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -123,30 +124,38 @@ export function Done({
 
   if (undoReport) {
     return (
-      <div className="mx-auto max-w-2xl py-10 text-center">
-        <div className="text-6xl">↩️</div>
-        <h2 className="mt-4 text-2xl font-bold">Everything is back where it was</h2>
-        <p className="mt-2 text-slate-600 dark:text-slate-300">
-          Restored {plural(undoReport.restored.length, "file")}
-          {undoReport.folders_removed > 0 && ` and removed ${plural(undoReport.folders_removed, "empty folder")} tidydrop had created`}.
+      <div className="mx-auto max-w-2xl pt-16 text-center">
+        <div className="mx-auto flex h-20 w-20 animate-pop items-center justify-center rounded-full bg-tint text-accent">
+          <RotateCcw size={34} strokeWidth={1.8} aria-hidden />
+        </div>
+        <h2 className="mt-6 text-[34px] font-bold leading-tight tracking-tight text-ink">Everything is back where it was</h2>
+        <p className="mt-3 text-lg text-ink-2">
+          Restored <Count n={undoReport.restored.length} one="file" />
+          {undoReport.folders_removed > 0 && (
+            <>
+              {" "}
+              and removed <Count n={undoReport.folders_removed} one="empty folder" /> tidydrop had created
+            </>
+          )}
+          .
         </p>
         {undoReport.restored.some((r) => r.renamed) && (
-          <p className="mt-2 text-sm text-amber-700">Some files came back with “(1)” added because a new file with the same name was already there.</p>
+          <p className="mt-3 text-[15px] text-ink-2">Some files came back with “(1)” added because a new file with the same name was already there.</p>
         )}
         {undoReport.problems.length > 0 && (
-          <Card className="mt-4 text-left">
-            <h3 className="mb-2 font-semibold">Couldn't restore {plural(undoReport.problems.length, "file")}</h3>
-            <ul className="space-y-1 text-sm">
+          <Panel className="mt-8 p-6 text-left">
+            <h3 className="mb-3 text-lg font-semibold text-error">Couldn't restore {plural(undoReport.problems.length, "file")}</h3>
+            <ul className="divide-y divide-line">
               {undoReport.problems.map((p) => (
-                <li key={p.path}>
-                  <strong>{baseName(p.path)}</strong> — {p.reason}
+                <li key={p.path} className="py-2 text-[15px] text-ink">
+                  <span className="font-semibold">{baseName(p.path)}</span> <span className="text-ink-2">— {p.reason}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-2 text-xs text-slate-500">You can try Undo again later from History.</p>
-          </Card>
+            <p className="mt-3 text-sm text-ink-3">You can try Undo again later from History.</p>
+          </Panel>
         )}
-        <Button variant="primary" className="mt-6" onClick={onHome}>
+        <Button variant="primary" size="lg" className="mt-10" onClick={onHome}>
           Done
         </Button>
       </div>
@@ -154,37 +163,43 @@ export function Done({
   }
 
   return (
-    <div className="mx-auto max-w-3xl py-4">
+    <div className="mx-auto max-w-4xl">
       <BeforeAfter items={moved} order={order} />
-      <div className="mt-6 text-center">
-        <h2 className="text-3xl font-extrabold">
-          {moved.length > 0 ? `Tidy! ${plural(moved.length, "file")} sorted into ${plural(folders.size, "folder")}.` : "Nothing was moved."}
+      <div className="mt-10 text-center">
+        <h2 className="text-[40px] font-bold leading-tight tracking-tight text-ink">
+          {moved.length > 0 ? (
+            <>
+              Tidy. <span className="font-mono">{moved.length}</span> files sorted into <span className="font-mono">{folders.size}</span> folders.
+            </>
+          ) : (
+            "Nothing was moved."
+          )}
         </h2>
-        <p className="mt-2 text-slate-600 dark:text-slate-300">Changed your mind? One click puts everything back, even after you restart.</p>
-        <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <Button variant="primary" onClick={onOpenFolder}>
-            📂 Open {baseName(root)}
+        <p className="mt-3 text-lg text-ink-2">Changed your mind? One click puts everything back, even after a restart.</p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Button variant="primary" size="lg" onClick={onOpenFolder}>
+            <FolderOpen size={18} /> Open {baseName(root)}
           </Button>
-          <Button onClick={onUndo} disabled={undoing || moved.length === 0}>
-            {undoing ? "Undoing…" : "↩ Undo this cleanup"}
+          <Button size="lg" onClick={onUndo} disabled={undoing || moved.length === 0}>
+            <RotateCcw size={17} /> {undoing ? "Undoing…" : "Undo this cleanup"}
           </Button>
-          <Button variant="ghost" onClick={onHome}>
+          <Button variant="quiet" size="lg" onClick={onHome}>
             Done
           </Button>
         </div>
       </div>
       {notMoved.length > 0 && (
-        <Card className="mt-6">
-          <h3 className="mb-2 font-semibold">Left in place ({notMoved.length})</h3>
-          <ul className="space-y-1 text-sm">
+        <section className="mx-auto mt-12 max-w-2xl">
+          <h3 className="mb-2 text-lg font-semibold text-ink">Left in place ({notMoved.length})</h3>
+          <ul className="divide-y divide-line">
             {notMoved.map((n) => (
-              <li key={n.id} className="flex justify-between gap-3">
-                <span className="truncate">{n.name}</span>
-                <span className="shrink-0 text-slate-500">{n.reason}</span>
+              <li key={n.id} className="flex justify-between gap-4 py-2 text-[15px]">
+                <span className="truncate text-ink">{n.name}</span>
+                <span className="shrink-0 text-ink-3">{n.reason}</span>
               </li>
             ))}
           </ul>
-        </Card>
+        </section>
       )}
     </div>
   );

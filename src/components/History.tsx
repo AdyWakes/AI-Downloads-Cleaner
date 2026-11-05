@@ -1,48 +1,58 @@
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import type { JournalSummary } from "../types";
-import { Button, Card, Pill } from "../ui";
-import { formatWhen, plural } from "../format";
+import { Badge, Button, Count, Panel } from "../ui";
+import { formatWhen } from "../format";
 
-const STATUS: Record<string, { label: string; tone: "brand" | "slate" | "amber" | "blue" }> = {
+const STATUS: Record<string, { label: string; tone: "brand" | "neutral" | "error" }> = {
   applied: { label: "Applied", tone: "brand" },
-  interrupted: { label: "Interrupted", tone: "amber" },
-  undone: { label: "Undone", tone: "slate" },
-  partially_undone: { label: "Partly undone", tone: "amber" },
-  empty: { label: "Nothing moved", tone: "slate" },
+  interrupted: { label: "Interrupted", tone: "error" },
+  undone: { label: "Undone", tone: "neutral" },
+  partially_undone: { label: "Partly undone", tone: "error" },
+  empty: { label: "Nothing moved", tone: "neutral" },
 };
 
 export function History({ items, onUndo, busy, onBack }: { items: JournalSummary[]; onUndo: (id: string) => void; busy: boolean; onBack: () => void }) {
   const visible = items.filter((i) => i.status !== "empty");
   return (
     <div className="mx-auto max-w-3xl">
-      <h2 className="mb-1 text-2xl font-bold">History</h2>
-      <p className="mb-4 text-sm text-slate-500">Every cleanup is recorded on this computer, so you can undo it any time.</p>
-      {visible.length === 0 && <Card>No cleanups yet.</Card>}
-      <div className="space-y-2">
-        {visible.map((j) => {
-          const s = STATUS[j.status] ?? STATUS.applied;
-          const canUndo = j.status === "applied" || j.status === "interrupted" || j.status === "partially_undone";
-          return (
-            <Card key={j.id} className="flex items-center justify-between gap-3 !py-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 font-medium">
-                  {formatWhen(j.created_at)} <Pill tone={s.tone}>{s.label}</Pill>
+      <h2 className="text-[34px] font-bold leading-tight tracking-tight text-ink">History</h2>
+      <p className="mt-1 text-lg text-ink-2">Every cleanup is recorded on this computer, so you can undo it any time.</p>
+
+      <Panel className="mt-8 overflow-hidden">
+        {visible.length === 0 && <p className="px-6 py-10 text-center text-ink-2">No cleanups yet.</p>}
+        <ul className="divide-y divide-line">
+          {visible.map((j) => {
+            const s = STATUS[j.status] ?? STATUS.applied;
+            const canUndo = j.status === "applied" || j.status === "interrupted" || j.status === "partially_undone";
+            return (
+              <li key={j.id} className="group flex items-center justify-between gap-4 px-6 py-4 transition-colors hover:bg-tint">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[15px] font-semibold text-ink">{formatWhen(j.created_at)}</span>
+                    <Badge tone={s.tone}>{s.label}</Badge>
+                  </div>
+                  <div className="mt-0.5 truncate text-sm text-ink-3 transition-colors group-hover:text-ink-2">
+                    <Count n={j.moved} one="file" /> moved in <span className="font-mono">{j.root}</span>
+                    {j.restored > 0 && (
+                      <>
+                        {" · "}
+                        <span className="font-mono">{j.restored}</span> restored
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="truncate text-xs text-slate-500">
-                  {plural(j.moved, "file")} moved in {j.root}
-                  {j.restored > 0 && ` · ${j.restored} restored`}
-                </div>
-              </div>
-              {canUndo && (
-                <Button disabled={busy} onClick={() => onUndo(j.id)}>
-                  ↩ Undo
-                </Button>
-              )}
-            </Card>
-          );
-        })}
-      </div>
-      <Button variant="ghost" className="mt-6" onClick={onBack}>
-        ← Back
+                {canUndo && (
+                  <Button size="sm" disabled={busy} onClick={() => onUndo(j.id)}>
+                    <RotateCcw size={14} /> Undo
+                  </Button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </Panel>
+      <Button variant="quiet" className="mt-8" onClick={onBack}>
+        <ArrowLeft size={16} /> Back
       </Button>
     </div>
   );

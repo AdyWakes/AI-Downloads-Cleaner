@@ -8,7 +8,7 @@
 
 <p align="center">
   <!-- DEMO GIF PLACEHOLDER: record the before/after screen and save as docs/demo.gif -->
-  <img src="docs/screenshots/after.png" width="720" alt="tidydrop demo (GIF coming soon)">
+  <img src="docs/screenshots/done.png" width="720" alt="tidydrop after a cleanup: files settled into orange folders (demo GIF coming soon)">
 </p>
 
 tidydrop is a free, open-source desktop app that sorts a messy **Downloads** folder into sensible folders
@@ -17,8 +17,23 @@ out of the box and, if you want, a small AI model that runs **on your own comput
 
 Built for normal people: Windows first, then macOS and Linux.
 
-| Stats | Preview | Done |
+| Pick a folder | Stats | Preview the plan |
 |---|---|---|
+| ![Home screen with folder picker](docs/screenshots/home.png) | ![Stats: file count, size, where things will go](docs/screenshots/stats.png) | ![Preview of every file and its destination](docs/screenshots/preview.png) |
+
+| Cleaning | Done | History |
+|---|---|---|
+| ![Moving files with progress](docs/screenshots/cleaning.png) | ![Files settled into folders, with undo](docs/screenshots/done.png) | ![Past cleanups with undo](docs/screenshots/history.png) |
+
+| Settings: folders | Settings: rules | Local AI setup |
+|---|---|---|
+| ![Category folders](docs/screenshots/settings.png) | ![Sorting rules](docs/screenshots/settings-rules.png) | ![Ollama setup guide](docs/screenshots/ai-setup.png) |
+
+Dark mode follows your system and uses the same warm palette:
+
+<p align="center"><img src="docs/screenshots/dark-done.png" width="720" alt="Done screen in dark mode"></p>
+
+---|---|---|
 | ![stats](docs/screenshots/stats-dark.png) | ![preview](docs/screenshots/preview.png) | ![before](docs/screenshots/before.png) |
 
 ---
