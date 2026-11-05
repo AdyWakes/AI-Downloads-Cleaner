@@ -6,8 +6,11 @@
 
 - Phase 3: plan (overrides recomputed server-side, can't escape root), apply (re-checks every file right before moving, no-overwrite rename, collision numbering, refuses symlink/junction destinations, fsynced intent line before each move), JSONL journal in app data dir, undo (works after restart, never overwrites, retryable partial undo, crash recovery, removes only empty folders it created). Integration tests incl. full messy-folder round trip, long paths >260 chars, Hindi/Japanese/emoji names. 36 tests.
 
+- Phase 5 (core part, done before UI so commands could use it): Ollama client, snippets, pipeline.
+- Phase 4: Tauri commands (state holds the plan; UI only sends overrides), React UI: home/folder pick, AI badge + Ollama guide, stats (size, largest, duplicates, skipped), preview (untick, change category, custom folder, by-month toggle, filter), apply progress, before/after animation, undo, history, settings (folders, rules, AI, general), dark/light. Browser mock backend for `npm run dev` demos. Screenshots in docs/screenshots.
+
 ## In progress
-- Phase 4: UI.
+- Phase 6: CLI.
 
 ## Next
 - Phases 3–7.

@@ -19,3 +19,8 @@ Choices made while building autonomously. Format: **what** — why — alternati
 15. **Undo never overwrites.** If the original spot is occupied again, the file comes back as `name (1).ext` and the report says so. Missing files are reported; undo can be re-run later.
 16. **User destination edits are limited to "another category" or "custom sub-folder inside the cleaned folder".** Destinations are always recomputed in Rust from the category/relative folder, never taken as raw paths from the UI.
 17. **Folders created by a cleanup are removed on undo only if empty** (`remove_dir`, which can't delete content). Unused folders are also cleaned up right after apply.
+18. **Phase order: AI core (phase 5) was written before the UI (phase 4)** so the Tauri commands could call the real pipeline. Committed separately.
+19. **Backend owns the plan.** The Tauri state stores the plan; the UI sends only `{id, enabled, category, custom_folder}` overrides, and `apply_plan` takes no plan argument. A buggy or compromised webview can't send raw paths.
+20. **Browser mock backend (`src/mock.ts`).** `npm run dev` in a normal browser shows the full flow with fake data (labelled "browser demo") — used for screenshots and the demo GIF; never touches files.
+21. **Locally the Tauri crate is type-checked with stub `.pc` files** (scratchpad, not committed) because WebKitGTK dev packages aren't installed and installing system packages was off-limits. CI builds it for real.
+22. **Emoji icons for categories** instead of an icon library — zero dependencies, render natively on Windows/macOS/Linux.
