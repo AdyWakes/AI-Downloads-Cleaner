@@ -10,10 +10,11 @@
 7. AI: talks only to Ollama on localhost, only for ambiguous files, strict JSON is validated, and anything that fails falls back to rules. PDF/docx/txt snippets are capped at 400 characters.
 8. Tests: 36 core unit + 10 end-to-end safety tests (including "undo restores a 35-file messy folder byte-for-byte", long paths > 260 chars, Hindi/Japanese/emoji, crash recovery) + 2 CLI tests + 4 UI tests.
 9. CI (`ci.yml`) is green on Windows, macOS and Linux, including a real Tauri shell build. `release.yml` builds draft-release installers on a `v*` tag. I did not tag anything.
-10. I also added `build-installers.yml` (manual, artifacts only) and triggered it for Windows. Check the Actions tab for the `tidydrop-windows` artifact.
+10. I also added `build-installers.yml` (manual, artifacts only) and ran it for Windows. It succeeded: the `tidydrop-windows` artifact (8.9 MB, `.msi` + setup `.exe` + `tidydrop-cli.exe`) is at https://github.com/AdyWakes/AI-Downloads-Cleaner/actions/runs/41924127536 and includes all the code.
 
 ## What works (verified)
-- `cargo test` (all green locally; CI green on all 3 OSes as of the Phase 6 commit). Later commits: see Actions.
+- `cargo test` is green locally, and CI is green on Windows, macOS and Linux for every commit from Phase 6 on (including the real Tauri shell build).
+- The Windows `.msi`/`.exe` installers were built successfully by GitHub Actions.
 - `npm run typecheck`, `npm test`, `npm run build`.
 - The UI flow was clicked through end-to-end in headless Chromium against the mock backend, in light and dark mode (screenshots in `docs/screenshots/`).
 - `cargo build --release -p tidydrop-cli` (≈4 MB binary).
