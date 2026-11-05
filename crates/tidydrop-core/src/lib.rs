@@ -5,14 +5,17 @@
 
 #![cfg_attr(test, allow(clippy::field_reassign_with_default))]
 
+pub mod ai;
 pub mod apply;
 pub mod config;
 pub mod error;
 pub mod journal;
 pub mod paths;
+pub mod pipeline;
 pub mod plan;
 pub mod rules;
 pub mod scanner;
+pub mod snippet;
 pub mod stats;
 pub mod undo;
 
