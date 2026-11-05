@@ -1,13 +1,99 @@
+/* Fonts are bundled locally (the app is offline; CSP allows only 'self'). */
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-sans/latin-700.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-400.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-600.css";
+@import "@fontsource/ibm-plex-sans-devanagari/devanagari-400.css";
+@import "@fontsource/ibm-plex-sans-devanagari/devanagari-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * tidydrop design tokens. Every colour in the UI comes from here.
+ * Values are "R G B" so Tailwind can apply opacity (e.g. bg-ink/40).
+ */
+:root {
+  --bg: 250 248 245; /* #FAF8F5 warm off-white page */
+  --surface: 255 255 255; /* #FFFFFF */
+  --line: 237 233 227; /* #EDE9E3 dividers */
+  --ink: 28 25 23; /* #1C1917 primary text */
+  --ink-2: 87 83 78; /* #57534E secondary text */
+  --ink-3: 120 113 108; /* #78716C muted text (4.6:1 on bg) */
+  --brand: 249 115 22; /* #F97316 logo, fills, selected states. Never behind white text. */
+  --action: 194 65 12; /* #C2410C primary buttons (white text 5.2:1) */
+  --action-hover: 154 52 18; /* #9A3412 */
+  --accent: 194 65 12; /* orange text on light surfaces */
+  --tint: 255 241 230; /* #FFF1E6 hover rows, selected, soft badges */
+  --tint-strong: 254 215 170; /* #FED7AA */
+  --on-action: 255 255 255;
+  --paper: 255 255 255; /* illustration sheets */
+  --paper-line: 254 215 170;
+  --success: 21 128 61; /* #15803D */
+  --error: 185 28 28; /* #B91C1C */
+  /* "Where things will go" bar: orange shades for the biggest groups, warm neutrals after. */
+  --chart-1: 249 115 22; /* #F97316 */
+  --chart-2: 253 186 116; /* #FDBA74 */
+  --chart-3: 254 215 170; /* #FED7AA */
+  --chart-4: 214 207 199; /* #D6CFC7 */
+  --chart-5: 231 225 218; /* #E7E1DA */
+  color-scheme: light;
+}
+
+.dark {
+  --bg: 22 20 18; /* #161412 */
+  --surface: 31 28 25; /* #1F1C19 */
+  --line: 48 43 38; /* #302B26 */
+  --ink: 245 242 238; /* #F5F2EE */
+  --ink-2: 214 208 200; /* #D6D0C8 */
+  --ink-3: 168 162 158; /* #A8A29E (6.9:1 on surface) */
+  --brand: 249 115 22;
+  --action: 194 65 12;
+  --action-hover: 154 52 18; /* #9A3412 (keeps white text AA) */
+  --accent: 251 146 60; /* #FB923C orange text on dark */
+  --tint: 46 31 20; /* #2E1F14 */
+  --tint-strong: 92 48 18; /* #5C3012 */
+  --on-action: 255 255 255;
+  --paper: 245 242 238;
+  --paper-line: 253 186 116;
+  --success: 74 222 128; /* #4ADE80 (AA on dark) */
+  --error: 248 113 113; /* #F87171 (AA on dark) */
+  --chart-1: 249 115 22;
+  --chart-2: 194 65 12;
+  --chart-3: 124 45 18;
+  --chart-4: 87 83 78;
+  --chart-5: 63 58 53;
+  color-scheme: dark;
+}
+
 html {
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 body {
-  @apply bg-slate-50 dark:bg-slate-950;
+  @apply bg-bg font-sans text-ink;
 }
-code {
-  font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+::selection {
+  background: rgb(var(--tint-strong));
+  color: rgb(var(--ink));
+}
+input[type="checkbox"] {
+  accent-color: rgb(var(--action));
+}
+.dark input[type="checkbox"] {
+  accent-color: rgb(var(--brand));
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 }

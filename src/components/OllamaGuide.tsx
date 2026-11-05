@@ -1,3 +1,4 @@
+import { Check, ExternalLink } from "lucide-react";
 import { api } from "../api";
 import type { AiStatus } from "../types";
 import { Button, Modal } from "../ui";
@@ -5,46 +6,50 @@ import { Button, Modal } from "../ui";
 export function OllamaGuide({ status, onClose, onRecheck }: { status: AiStatus | null; onClose: () => void; onRecheck: () => void }) {
   const model = status?.model ?? "llama3.2:3b";
   const step = !status?.reachable ? 1 : !status.model_available ? 2 : 3;
-  const Step = ({ n, title, children }: { n: number; title: string; children: React.ReactNode }) => (
-    <li className={`flex gap-3 rounded-xl p-3 ${step === n ? "bg-brand-50 ring-1 ring-brand-200 dark:bg-brand-900/30 dark:ring-brand-800" : ""}`}>
-      <span
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-          step > n ? "bg-brand-500 text-white" : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
-        }`}
-      >
-        {step > n ? "✓" : n}
-      </span>
-      <div className="text-sm">
-        <div className="font-semibold">{title}</div>
-        <div className="mt-1 text-slate-600 dark:text-slate-300">{children}</div>
-      </div>
-    </li>
-  );
+  const Step = ({ n, title, children }: { n: number; title: string; children?: React.ReactNode }) => {
+    const done = step > n;
+    const current = step === n;
+    return (
+      <li className={`flex gap-4 rounded-xl p-4 transition-colors ${current ? "bg-tint" : ""}`}>
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-sm font-medium ${
+            done ? "bg-brand text-ink" : current ? "bg-surface text-accent shadow-soft" : "bg-bg text-ink-3"
+          }`}
+        >
+          {done ? <Check size={16} strokeWidth={2.5} /> : n}
+        </span>
+        <div className="min-w-0 pt-1">
+          <div className={`text-[15px] font-semibold ${current || done ? "text-ink" : "text-ink-2"}`}>{title}</div>
+          {children && <div className="mt-1.5 text-sm leading-6 text-ink-2">{children}</div>}
+        </div>
+      </li>
+    );
+  };
   return (
-    <Modal title="Turn on smart AI sorting (optional)" onClose={onClose}>
-      <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
-        tidydrop works great with rules alone. With a free local AI model it can also read the first lines of unclear files
-        (like <em>scan0042.pdf</em>) to sort them better. <strong>The AI runs on your computer. Nothing is uploaded.</strong>
+    <Modal title="Smart AI sorting (optional)" onClose={onClose}>
+      <p className="mb-5 text-[15px] leading-6 text-ink-2">
+        Rules alone work well. A free local model can also read the first lines of unclear files, like <span className="font-mono text-ink">scan0042.pdf</span>, to sort them better.{" "}
+        <span className="font-semibold text-ink">It runs on your computer. Nothing is uploaded.</span>
       </p>
-      <ol className="space-y-2">
+      <ol className="space-y-1">
         <Step n={1} title="Install Ollama (free)">
-          <Button variant="primary" className="mt-1" onClick={() => api.openOllamaDownload()}>
-            Open ollama.com/download
+          <Button variant={step === 1 ? "primary" : "outline"} size="sm" className="mt-1" onClick={() => api.openOllamaDownload()}>
+            Open ollama.com/download <ExternalLink size={14} />
           </Button>
-          <div className="mt-1 text-xs">Run the installer, then come back here.</div>
+          <div className="mt-2">Run the installer, then come back here.</div>
         </Step>
         <Step n={2} title="Download a small model (about 2 GB, once)">
-          Open a terminal (Windows: press Start, type <em>PowerShell</em>) and run:
-          <code className="mt-1 block select-all rounded-lg bg-slate-900 px-3 py-2 font-mono text-xs text-brand-200">ollama pull {model}</code>
+          Open PowerShell (press Start, type <em>PowerShell</em>) and run:
+          <code className="mt-2 block select-all rounded-lg bg-bg px-3 py-2 font-mono text-[13px] text-ink">ollama pull {model}</code>
         </Step>
-        <Step n={3} title="Done">That's it. tidydrop detects it automatically.</Step>
+        <Step n={3} title="That's it. tidydrop detects it automatically." />
       </ol>
-      {status && <p className="mt-4 text-xs text-slate-500">Status: {status.message}</p>}
-      <div className="mt-5 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onClose}>
+      {status && <p className="mt-5 text-sm text-ink-3">Status: {status.message}</p>}
+      <div className="mt-6 flex justify-end gap-2">
+        <Button variant="quiet" onClick={onClose}>
           Close
         </Button>
-        <Button variant="primary" onClick={onRecheck}>
+        <Button variant={step === 1 ? "outline" : "primary"} onClick={onRecheck}>
           Check again
         </Button>
       </div>
