@@ -1,1 +1,3 @@
-fn main() { println!("tidydrop-cli {}", tidydrop_core::version()); }
+fn main() {
+    println!("tidydrop-cli {}", tidydrop_core::version());
+}
