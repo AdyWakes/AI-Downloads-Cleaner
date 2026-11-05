@@ -15,3 +15,7 @@ Choices made while building autonomously. Format: **what** — why — alternati
 11. **No-overwrite renames via OS primitives** (`renameat2(RENAME_NOREPLACE)` on Linux, `renamex_np(RENAME_EXCL)` on macOS, `MoveFileExW` without REPLACE/COPY flags on Windows). — `std::fs::rename` silently overwrites. Cross-drive moves are refused rather than copy+delete.
 12. **Duplicates: size → 64 KiB pre-hash → full BLAKE3.** Cloud-only (OneDrive online-only) files are never read, so scanning doesn't trigger downloads.
 13. **Rule keywords match whole words** (Unicode word segmentation + letter/digit split) so `bill` doesn't hit `billboard`. `re:` prefix for regex.
+14. **Journal = append-only JSON Lines** (`<id>.jsonl` in the app data dir). — Rewriting one big JSON per move is O(n²); JSONL with an fsynced `intent` before each rename and `done` after survives crashes. Truncated last lines are ignored.
+15. **Undo never overwrites.** If the original spot is occupied again, the file comes back as `name (1).ext` and the report says so. Missing files are reported; undo can be re-run later.
+16. **User destination edits are limited to "another category" or "custom sub-folder inside the cleaned folder".** Destinations are always recomputed in Rust from the category/relative folder, never taken as raw paths from the UI.
+17. **Folders created by a cleanup are removed on undo only if empty** (`remove_dir`, which can't delete content). Unused folders are also cleaned up right after apply.
