@@ -13,11 +13,20 @@
 
 - Phase 7: release workflow (tauri-action draft release for Windows/macOS universal/Linux + CLI archives), README, CONTRIBUTING, LICENSE (MIT).
 
+- Final: full test run (36 core unit + 10 e2e + 2 CLI + 4 UI tests green), `npm run build`, release CLI build, safety self-review (fixes in DECISIONS #23), manual `build-installers.yml` workflow, MORNING.md.
+
 ## In progress
-- Final: full test/build run, safety self-review.
+- Nothing. Waiting on your manual Windows test (checklist in MORNING.md).
 
 ## Next
-- Phases 3–7.
+- Run the real desktop app on Windows (never launched in this container) and fix what you find.
+- Record the demo GIF (docs/demo.gif) and replace the README placeholder.
+- Tune default keywords using real misfiles from the preview.
+- Code signing (Windows/macOS) before a public release.
 
 ## Known issues
-- The local build container has no WebKitGTK dev packages, so the Tauri shell cannot be fully built here; it is type-checked in CI (`app` job).
+- The desktop window was never launched in this container (no WebKitGTK). The shell compiles and passes clippy in CI (`app` job), and the UI was tested against the browser mock.
+- AI tier tested only against a fake Ollama server.
+- Undo moves back whatever file now has the recorded name, even if you replaced it with a different file (never lost, but may be surprising).
+- Installers are not code-signed.
+- No failing tests.
